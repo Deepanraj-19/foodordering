@@ -1,11 +1,7 @@
-// Simulated REST API Client with JWT Bearer Token Injection & Detailed Console Logging
+// Simulated REST API Client with JWT Bearer Token Injection & Clean Console Logging
 // Emulates Axios/Fetch with Interceptors for Experiment 1 (REST API), Exp 3 (CRUD), & Exp 4 (JWT Auth)
 
-import { getStoredToken, parseJWT } from '../utils/jwt.js';
-
-const BADGE_REQ = 'background: #0d6efd; color: white; padding: 2px 7px; border-radius: 4px; font-weight: bold; font-family: monospace;';
-const BADGE_RES = 'background: #198754; color: white; padding: 2px 7px; border-radius: 4px; font-weight: bold; font-family: monospace;';
-const BADGE_ERR = 'background: #dc3545; color: white; padding: 2px 7px; border-radius: 4px; font-weight: bold; font-family: monospace;';
+import { getStoredToken } from '../utils/jwt.js';
 
 /**
  * Universal simulated fetch client that handles request/response lifecycle
@@ -13,89 +9,34 @@ const BADGE_ERR = 'background: #dc3545; color: white; padding: 2px 7px; border-r
 async function apiRequest(method, endpoint, body = null, options = {}) {
   const startTime = performance.now();
   const token = getStoredToken();
-  const parsedToken = token ? parseJWT(token) : null;
 
   // Build Request Headers (mimicking Axios request interceptor)
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 
-  // 1. Log Outgoing Request
-  console.groupCollapsed(
-    `%c🚀 [HTTP ${method}]%c ${endpoint} %c(${token ? '🔒 Authenticated with JWT' : '🔓 Public'})`,
-    BADGE_REQ,
-    'color: #0d6efd; font-weight: bold;',
-    token ? 'color: #6f42c1; font-weight: bold;' : 'color: #888;'
-  );
-  console.log('%cFull Request URL:', 'color: #555;', `https://api.foodie-express.internal${endpoint}`);
-  console.log('%cHeaders:', 'color: #0d6efd;', headers);
-  if (token) {
-    console.log('%cBearer Token attached:', 'color: #6f42c1;', token);
-    console.log('%cDecoded Token Claims:', 'color: #6f42c1;', parsedToken?.payload);
-  }
-  if (body) {
-    console.log('%cRequest Body (Payload):', 'color: #fd7e14;', body);
-  }
-  console.groupEnd();
+  // Log outgoing request simply
+  console.log(`[API REQUEST] ${method} ${endpoint}`, {
+    headers,
+    ...(body ? { body } : {})
+  });
 
-  // Simulate network latency (250ms - 450ms)
-  const delay = options.delay || 350;
+  // Simulate network latency (200ms - 350ms)
+  const delay = options.delay || 250;
   await new Promise(r => setTimeout(r, delay));
 
   const endTime = performance.now();
   const duration = Math.round(endTime - startTime);
 
-  // Dispatch custom event for UI console viewer
-  function emitLog(type, status, data, isError = false) {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('app:log', {
-        detail: {
-          type: isError ? 'error' : 'api',
-          title: `[HTTP ${method}] ${endpoint} (${status})`,
-          data: {
-            method,
-            endpoint,
-            status,
-            duration: `${duration}ms`,
-            authorization: token ? `Bearer ${token.substring(0, 18)}...` : 'None',
-            requestBody: body,
-            response: data
-          },
-          time: new Date().toLocaleTimeString()
-        }
-      }));
-    }
-  }
-
   return {
     success(status, data) {
-      console.groupCollapsed(
-        `%c📥 [HTTP ${status} OK]%c ${method} ${endpoint} %c[${duration}ms]`,
-        BADGE_RES,
-        'color: #198754; font-weight: bold;',
-        'color: #6c757d; font-size: 11px;'
-      );
-      console.log('%cResponse Status:', 'color: #198754; font-weight: bold;', `${status} OK`);
-      console.log('%cExecution Time:', 'color: #6c757d;', `${duration}ms`);
-      console.log('%cResponse Data:', 'color: #212529;', data);
-      console.groupEnd();
-      emitLog('api', status, data, false);
+      console.log(`[API RESPONSE] ${status} ${method} ${endpoint} (${duration}ms):`, data);
       return { ok: true, status, data };
     },
     error(status, errorMessage) {
-      console.groupCollapsed(
-        `%c❌ [HTTP ${status} ERROR]%c ${method} ${endpoint} %c[${duration}ms]`,
-        BADGE_ERR,
-        'color: #dc3545; font-weight: bold;',
-        'color: #6c757d; font-size: 11px;'
-      );
-      console.error('%cError Message:', 'color: #dc3545; font-weight: bold;', errorMessage);
-      console.log('%cExecution Time:', 'color: #6c757d;', `${duration}ms`);
-      console.groupEnd();
-      emitLog('error', status, { error: errorMessage }, true);
+      console.error(`[API ERROR] ${status} ${method} ${endpoint} (${duration}ms):`, errorMessage);
       return { ok: false, status, error: errorMessage };
     }
   };

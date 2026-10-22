@@ -17,8 +17,7 @@ import Orders from './pages/Orders.jsx';
 import CurrentOrders from './pages/CurrentOrders.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import AdminMenu from './pages/AdminMenu.jsx';
-import ConsoleViewer from './components/ConsoleViewer.jsx';
-import { initConsoleBanner, logAction } from './utils/logger.js';
+import { logAction } from './utils/logger.js';
 
 function RouteTracker() {
   const location = useLocation();
@@ -26,8 +25,7 @@ function RouteTracker() {
   useEffect(() => {
     logAction('route', 'PAGE NAVIGATION', {
       pathname: location.pathname,
-      search: location.search || '(none)',
-      url: window.location.href
+      search: location.search || '(none)'
     });
   }, [location]);
 
@@ -45,10 +43,6 @@ function NotFound() {
 }
 
 export default function App() {
-  useEffect(() => {
-    initConsoleBanner();
-  }, []);
-
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -76,7 +70,6 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <footer>© 2026 FoodieExpress · Fresh food, happy mood!</footer>
-            <ConsoleViewer />
           </CartProvider>
         </MenuProvider>
       </AuthProvider>

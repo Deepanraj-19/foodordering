@@ -1,5 +1,5 @@
 // JWT (JSON Web Token) Utility for FoodieExpress
-// Handles generation, base64url encoding/decoding, storage, and console reporting
+// Handles generation, base64url encoding/decoding, storage, and clean console logging
 
 export function base64UrlEncode(str) {
   try {
@@ -53,12 +53,10 @@ export function generateJWT(user, expiresInSeconds = 3600) {
 
   const token = `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 
-  // Print formatted JWT to console
-  logJWTEvent('JWT TOKEN CREATED & ISSUED', {
+  logJWTEvent('JWT ISSUED', {
     token,
     header,
     payload,
-    signature: encodedSignature,
     expiresAt: new Date(payload.exp * 1000).toLocaleString()
   });
 
@@ -104,50 +102,21 @@ export function setStoredToken(token) {
     localStorage.setItem('foodAuthToken', token);
     const parsed = parseJWT(token);
     if (parsed) {
-      logJWTEvent('JWT STORED IN LOCALSTORAGE', {
+      logJWTEvent('JWT STORED', {
         storageKey: 'foodAuthToken',
-        tokenPreview: `${token.substring(0, 24)}...${token.substring(token.length - 12)}`,
-        claims: parsed.payload
+        tokenPreview: `${token.substring(0, 24)}...`,
+        payload: parsed.payload
       });
     }
   } else {
     localStorage.removeItem('foodAuthToken');
-    logJWTEvent('JWT CLEARED FROM STORAGE', { status: 'Revoked / Logged out' });
+    logJWTEvent('JWT REVOKED', { status: 'Session cleared / Logged out' });
   }
 }
 
 /**
- * Console Logger specifically styled for JWT
+ * Clean, simple console logging for JWT events
  */
-export function logJWTEvent(actionTitle, details) {
-  const badgeStyle = 'background: #6f42c1; color: #ffffff; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-family: monospace;';
-  const titleStyle = 'color: #6f42c1; font-weight: bold; font-size: 12px;';
-
-  console.groupCollapsed(`%c🔑 JWT AUTH%c ${actionTitle}`, badgeStyle, titleStyle);
-  if (details.token) {
-    console.log('%cRaw Token string (Header.Payload.Signature):', 'color: #b93824; font-weight: bold;');
-    console.log(details.token);
-  }
-  if (details.header) {
-    console.log('%cDecoded Header:', 'color: #0d6efd; font-weight: bold;', details.header);
-  }
-  if (details.payload) {
-    console.log('%cDecoded Payload (Claims):', 'color: #198754; font-weight: bold;', details.payload);
-  }
-  if (details.expiresAt) {
-    console.log('%cExpires At:', 'color: #d63384; font-weight: bold;', details.expiresAt);
-  }
-  Object.keys(details).forEach(key => {
-    if (!['token', 'header', 'payload', 'expiresAt'].includes(key)) {
-      console.log(`%c${key}:`, 'color: #6c757d; font-weight: bold;', details[key]);
-    }
-  });
-  console.groupEnd();
-
-  // Dispatch custom event for UI console viewer if present
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('app:log', {
-      detail: { type: 'jwt', title: actionTitle, data: details, time: new Date().toLocaleTimeString() }
-    }));
-  }
+export function logJWTEvent(actionTitle, details = {}) {
+  console.log(`[JWT] ${actionTitle}:`, details);
 }
