@@ -1,0 +1,2 @@
+import { Link, useLocation } from 'react-router-dom';
+export default function Confirmation() { const { state } = useLocation(); return <main className="content narrow"><section className="panel confirmation"><div>✅</div><p className="eyebrow">ORDER PLACED</p><h2>Thanks for your order!</h2><p>Your order has been received and is being prepared.</p>{state?.orderId && <p>Order reference: <b>#{String(state.orderId).slice(-6)}</b></p>}<Link className="primary-link" to="/orders/current">Track My Order</Link><p><Link to="/menu">Order more food</Link></p></section></main>; }
