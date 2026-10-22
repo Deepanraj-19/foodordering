@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { MenuProvider } from './context/MenuContext.jsx';
 import Header from './components/Header.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -14,10 +15,48 @@ import Confirmation from './pages/Confirmation.jsx';
 import Orders from './pages/Orders.jsx';
 import CurrentOrders from './pages/CurrentOrders.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
-function NotFound() { return <main className="content panel"><h2>Page not found</h2><p>The page you requested does not exist.</p><a href="/">Return Home</a></main>; }
-export default function App() { return <ErrorBoundary><AuthProvider><CartProvider><Header/><Routes>
-  <Route path="/" element={<Home/>}/><Route path="/menu" element={<FoodMenu/>}/><Route path="/food/:id" element={<FoodDetails/>}/><Route path="/login" element={<Login/>}/>
-  <Route path="/cart" element={<ProtectedRoute><Cart/></ProtectedRoute>}/><Route path="/checkout" element={<ProtectedRoute><Checkout/></ProtectedRoute>}/><Route path="/confirmation" element={<ProtectedRoute><Confirmation/></ProtectedRoute>}/>
-  <Route path="/orders" element={<ProtectedRoute><Orders/></ProtectedRoute>}><Route index element={<Navigate to="current" replace/>}/><Route path="current" element={<CurrentOrders/>}/><Route path="history" element={<OrderHistory/>}/></Route>
-  <Route path="*" element={<NotFound/>}/>
-</Routes><footer>© 2026 FoodieExpress · Fresh food, happy mood!</footer></CartProvider></AuthProvider></ErrorBoundary>; }
+import AdminMenu from './pages/AdminMenu.jsx';
+
+function NotFound() {
+  return (
+    <main className="content panel">
+      <h2>Page not found</h2>
+      <p>The page you requested does not exist.</p>
+      <a href="/">Return Home</a>
+    </main>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <MenuProvider>
+          <CartProvider>
+            <Header />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/menu" element={<FoodMenu />} />
+              <Route path="/food/:id" element={<FoodDetails />} />
+              <Route path="/login" element={<Login />} />
+
+              {/* Protected routes */}
+              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/confirmation" element={<ProtectedRoute><Confirmation /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>}>
+                <Route index element={<Navigate to="current" replace />} />
+                <Route path="current" element={<CurrentOrders />} />
+                <Route path="history" element={<OrderHistory />} />
+              </Route>
+              <Route path="/admin" element={<ProtectedRoute><AdminMenu /></ProtectedRoute>} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <footer>© 2026 FoodieExpress · Fresh food, happy mood!</footer>
+          </CartProvider>
+        </MenuProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+}
