@@ -129,6 +129,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f2c1a9;border-color:#
 .confirm-box{max-width:360px;text-align:center}
 .confirm-box .form-actions{justify-content:center;margin-top:18px}
 
+/* ─── PWA Install Banner & Update Toast ─────────────────────────────────── */
+.pwa-banner{position:fixed;bottom:0;left:0;right:0;background:#292421;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:2000;flex-wrap:wrap;font-size:14px;box-shadow:0 -4px 18px rgba(0,0,0,.22)}
+.pwa-banner div{display:flex;gap:10px;flex-shrink:0}
+.pwa-banner .btn-secondary{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.pwa-banner .btn-secondary:hover{background:rgba(255,255,255,.25);color:#fff}
+.pwa-toast{position:fixed;top:16px;right:16px;background:#292421;color:#fff;padding:14px 18px;border-radius:10px;display:flex;align-items:center;gap:12px;z-index:2000;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,.28)}
+.pwa-dismiss{padding:6px 10px;font-size:13px}
+
 /* ─── Footer ────────────────────────────────────────────────────────────── */
 footer{margin-top:45px;padding:20px;text-align:center;color:#fff;background:#292421;font-size:13px}
 
