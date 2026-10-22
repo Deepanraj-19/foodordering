@@ -34,6 +34,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          GITHUB_PAGES: 'true'
 
       - name: Copy index.html to 404.html for SPA routing
         run: cp dist/index.html dist/404.html
