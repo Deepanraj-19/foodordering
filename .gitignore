@@ -33,3 +33,4 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+push_to_github.bat
