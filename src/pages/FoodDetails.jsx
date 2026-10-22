@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useMenu } from '../context/MenuContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
+import { api } from '../services/api.js';
+import { logAction } from '../utils/logger.js';
 
 export default function FoodDetails() {
   const { id } = useParams();
@@ -8,12 +11,22 @@ export default function FoodDetails() {
   const food = items.find(f => f.id === Number(id));
   const { addToCart } = useCart();
 
-  if (!food) return (
-    <main className="content panel">
-      <h2>Food not found</h2>
-      <Link to="/menu">Back to menu</Link>
-    </main>
-  );
+  useEffect(() => {
+    if (id) {
+      // Simulate REST API call GET /api/foods/:id
+      api.getFoodById(id, items);
+      logAction('action', 'FOOD DETAILS PAGE LOADED', { foodId: id });
+    }
+  }, [id, items]);
+
+  if (!food) {
+    return (
+      <main className="content panel">
+        <h2>Food not found</h2>
+        <Link to="/menu">Back to menu</Link>
+      </main>
+    );
+  }
 
   return (
     <main className="content detail-layout">

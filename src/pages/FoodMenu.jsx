@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMenu } from '../context/MenuContext.jsx';
-import { useCart } from '../context/CartContext.jsx';
 import FoodCard from '../components/FoodCard.jsx';
+import { logAction } from '../utils/logger.js';
 
 const CATEGORIES = ['All', 'Fast Food', 'South Indian', 'Main Course', 'Dessert', 'Drinks'];
 
@@ -10,7 +10,9 @@ export default function FoodMenu() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
 
-  useEffect(() => { fetchItems(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchItems();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const foods = useMemo(() =>
     items.filter(f =>
@@ -19,6 +21,20 @@ export default function FoodMenu() {
     ),
     [items, search, category]
   );
+
+  function handleSearchChange(e) {
+    const val = e.target.value;
+    setSearch(val);
+    if (val.trim()) {
+      logAction('action', 'SEARCH FOOD MENU', { query: val });
+    }
+  }
+
+  function handleCategoryChange(e) {
+    const cat = e.target.value;
+    setCategory(cat);
+    logAction('action', 'FILTER BY CATEGORY', { selectedCategory: cat });
+  }
 
   return (
     <main className="content">
@@ -33,20 +49,20 @@ export default function FoodMenu() {
       <div className="filters">
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={handleSearchChange}
           placeholder="Search food…"
           aria-label="Search food items"
         />
         <select
           value={category}
-          onChange={e => setCategory(e.target.value)}
+          onChange={handleCategoryChange}
           aria-label="Filter by category"
         >
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
       </div>
 
-      {loading && <p className="message loading-message">⏳ Loading menu…</p>}
+      {loading && <p className="message loading-message">⏳ Loading menu from REST API…</p>}
       {error && <p className="error-message">{error}</p>}
       {!loading && !error && (
         foods.length

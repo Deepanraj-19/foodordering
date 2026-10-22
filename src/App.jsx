@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { MenuProvider } from './context/MenuContext.jsx';
@@ -16,6 +17,22 @@ import Orders from './pages/Orders.jsx';
 import CurrentOrders from './pages/CurrentOrders.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import AdminMenu from './pages/AdminMenu.jsx';
+import ConsoleViewer from './components/ConsoleViewer.jsx';
+import { initConsoleBanner, logAction } from './utils/logger.js';
+
+function RouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    logAction('route', 'PAGE NAVIGATION', {
+      pathname: location.pathname,
+      search: location.search || '(none)',
+      url: window.location.href
+    });
+  }, [location]);
+
+  return null;
+}
 
 function NotFound() {
   return (
@@ -28,11 +45,16 @@ function NotFound() {
 }
 
 export default function App() {
+  useEffect(() => {
+    initConsoleBanner();
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <MenuProvider>
           <CartProvider>
+            <RouteTracker />
             <Header />
             <Routes>
               <Route path="/" element={<Home />} />
@@ -54,6 +76,7 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <footer>© 2026 FoodieExpress · Fresh food, happy mood!</footer>
+            <ConsoleViewer />
           </CartProvider>
         </MenuProvider>
       </AuthProvider>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMenu } from '../context/MenuContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Navigate } from 'react-router-dom';
+import { logAction } from '../utils/logger.js';
 
 const CATEGORIES = ['Fast Food', 'South Indian', 'Main Course', 'Dessert', 'Drinks'];
 const EMOJIS = ['🍔', '🍕', '🥞', '🥘', '🍛', '🍰', '🍹', '🌯', '🍜', '🥗', '🍱', '🍣', '🥪', '🧆', '🍟'];
@@ -24,6 +25,7 @@ export default function AdminMenu() {
   if (!user) return <Navigate to="/login" replace />;
 
   function openAdd() {
+    logAction('crud', 'ADMIN OPEN ADD ITEM MODAL', {});
     setEditingId(null);
     setForm(EMPTY_FORM);
     setFormError(''); setFormSuccess('');
@@ -31,15 +33,24 @@ export default function AdminMenu() {
   }
 
   function openEdit(item) {
+    logAction('crud', 'ADMIN OPEN EDIT ITEM MODAL', { itemId: item.id, itemName: item.name });
     setEditingId(item.id);
     setForm({ name: item.name, category: item.category, price: String(item.price), rating: String(item.rating), emoji: item.emoji, description: item.description });
     setFormError(''); setFormSuccess('');
     setShowForm(true);
   }
 
-  function cancelForm() { setShowForm(false); setEditingId(null); setFormError(''); setFormSuccess(''); }
+  function cancelForm() {
+    logAction('crud', 'ADMIN CANCEL FORM MODAL', {});
+    setShowForm(false);
+    setEditingId(null);
+    setFormError('');
+    setFormSuccess('');
+  }
 
-  function handleChange(e) { setForm(old => ({ ...old, [e.target.name]: e.target.value })); }
+  function handleChange(e) {
+    setForm(old => ({ ...old, [e.target.name]: e.target.value }));
+  }
 
   function validate() {
     if (!form.name.trim()) return 'Food name is required.';
@@ -52,7 +63,11 @@ export default function AdminMenu() {
   async function handleSubmit(e) {
     e.preventDefault();
     const msg = validate();
-    if (msg) { setFormError(msg); return; }
+    if (msg) {
+      logAction('crud', 'ADMIN FORM VALIDATION FAILED', { error: msg });
+      setFormError(msg);
+      return;
+    }
     setFormError(''); setFormSuccess('');
     const payload = { ...form, price: Number(form.price), rating: Number(form.rating) || 4.0 };
     if (editingId) {
@@ -65,6 +80,7 @@ export default function AdminMenu() {
   }
 
   async function handleDelete(id) {
+    logAction('crud', 'ADMIN CONFIRM DELETE', { targetId: id });
     const res = await deleteItem(id);
     if (res.ok) { setDeleteConfirmId(null); }
   }
@@ -75,14 +91,14 @@ export default function AdminMenu() {
     <main className="content">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">ADMIN PANEL</p>
+          <p className="eyebrow">ADMIN PANEL (REST CRUD)</p>
           <h2>Manage Food Menu</h2>
         </div>
         <button onClick={openAdd} disabled={loading}>+ Add New Item</button>
       </div>
 
       {error && <p className="error-message">{error}</p>}
-      {loading && <p className="message loading-message">⏳ Processing…</p>}
+      {loading && <p className="message loading-message">⏳ Processing REST API call…</p>}
 
       {/* Add / Edit Form Modal */}
       {showForm && (
@@ -135,7 +151,7 @@ export default function AdminMenu() {
 
               <div className="form-actions">
                 <button type="submit" disabled={loading}>
-                  {loading ? 'Saving…' : (editingId ? 'Update Item' : 'Add Item')}
+                  {loading ? 'Saving…' : (editingId ? 'Update Item (PUT)' : 'Add Item (POST)')}
                 </button>
                 <button type="button" className="btn-secondary" onClick={cancelForm}>Cancel</button>
               </div>
@@ -150,10 +166,10 @@ export default function AdminMenu() {
           <div className="modal-box confirm-box">
             <div style={{ fontSize: '40px', textAlign: 'center' }}>🗑️</div>
             <h3 style={{ textAlign: 'center' }}>Delete this item?</h3>
-            <p style={{ textAlign: 'center', color: '#777' }}>This action cannot be undone.</p>
+            <p style={{ textAlign: 'center', color: '#777' }}>This action will execute a DELETE /api/foods/:id request.</p>
             <div className="form-actions" style={{ justifyContent: 'center' }}>
               <button onClick={() => handleDelete(deleteConfirmId)} disabled={loading}>
-                {loading ? 'Deleting…' : 'Yes, Delete'}
+                {loading ? 'Deleting…' : 'Yes, Delete (DELETE)'}
               </button>
               <button className="btn-secondary" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
             </div>
@@ -165,7 +181,10 @@ export default function AdminMenu() {
       <div style={{ marginBottom: '18px' }}>
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => {
+            setSearch(e.target.value);
+            if (e.target.value.trim()) logAction('crud', 'ADMIN SEARCH ITEMS', { query: e.target.value });
+          }}
           placeholder="Search food items…"
           aria-label="Search food items"
           style={{ maxWidth: '380px' }}
@@ -211,7 +230,10 @@ export default function AdminMenu() {
                     >✏️ Edit</button>
                     <button
                       className="btn-delete"
-                      onClick={() => setDeleteConfirmId(item.id)}
+                      onClick={() => {
+                        logAction('crud', 'ADMIN CLICK DELETE', { itemId: item.id, itemName: item.name });
+                        setDeleteConfirmId(item.id);
+                      }}
                       aria-label={`Delete ${item.name}`}
                       disabled={loading}
                     >🗑️ Delete</button>

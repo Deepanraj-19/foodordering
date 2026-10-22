@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { logAction } from '../utils/logger.js';
 
 export default function Login() {
   const { login, register, user } = useAuth();
@@ -19,31 +20,53 @@ export default function Login() {
   if (user) {
     return (
       <main className="content narrow panel">
-        <h2>You are already logged in as <em>{user.name}</em></h2>
-        <Link to="/menu">Browse food →</Link>
+        <h2>You are logged in as <em>{user.name}</em></h2>
+        <p style={{ color: '#27723a', fontWeight: 'bold' }}>Active JWT Token stored in localStorage</p>
+        <Link className="primary-link" to="/menu">Browse food →</Link>
       </main>
     );
   }
 
   function switchMode(m) {
-    setMode(m); setError(''); setSuccess('');
-    setName(''); setEmail(''); setPassword(''); setConfirm('');
+    logAction('auth', `SWITCH AUTH TAB: ${m.toUpperCase()}`, { previousMode: mode, newMode: m });
+    setMode(m);
+    setError('');
+    setSuccess('');
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirm('');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError(''); setSuccess(''); setLoading(true);
-    // Simulate async auth call
-    await new Promise(r => setTimeout(r, 400));
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
     if (mode === 'login') {
-      const msg = login(email, password);
-      if (msg) { setError(msg); setLoading(false); }
-      else navigate(location.state?.from?.pathname || '/menu', { replace: true });
+      const msg = await login(email, password);
+      if (msg) {
+        setError(msg);
+        setLoading(false);
+      } else {
+        navigate(location.state?.from?.pathname || '/menu', { replace: true });
+      }
     } else {
-      if (password !== confirm) { setError('Passwords do not match.'); setLoading(false); return; }
-      const msg = register(name, email, password);
-      if (msg) { setError(msg); setLoading(false); }
-      else navigate(location.state?.from?.pathname || '/menu', { replace: true });
+      if (password !== confirm) {
+        const mismatchErr = 'Passwords do not match.';
+        logAction('auth', 'REGISTRATION ERROR: PASSWORD MISMATCH', {});
+        setError(mismatchErr);
+        setLoading(false);
+        return;
+      }
+      const msg = await register(name, email, password);
+      if (msg) {
+        setError(msg);
+        setLoading(false);
+      } else {
+        navigate(location.state?.from?.pathname || '/menu', { replace: true });
+      }
     }
   }
 
@@ -53,7 +76,7 @@ export default function Login() {
         <div className="login-icon">{mode === 'login' ? '🍽️' : '🎉'}</div>
         <p className="eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'JOIN US TODAY'}</p>
         <h2>{mode === 'login' ? 'Login to FoodieExpress' : 'Create your Account'}</h2>
-        <p>{mode === 'login' ? 'Sign in to continue your order.' : 'Create a free account and start ordering!'}</p>
+        <p>{mode === 'login' ? 'Sign in to generate your JWT Bearer token.' : 'Register to get a new JWT authentication token.'}</p>
 
         {/* Mode Tabs */}
         <div className="auth-tabs">
@@ -125,7 +148,7 @@ export default function Login() {
             </label>
           )}
           <button className="wide" type="submit" disabled={loading}>
-            {loading ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : (mode === 'login' ? 'Login' : 'Create Account')}
+            {loading ? (mode === 'login' ? 'Authenticating & Issuing JWT…' : 'Registering & Creating JWT…') : (mode === 'login' ? 'Login' : 'Create Account')}
           </button>
         </form>
 
@@ -144,8 +167,8 @@ export default function Login() {
             </button>
           </small>
         )}
-        <small style={{display:'block',marginTop:'10px'}}>
-          Demo: any valid email + 6-char password works if no accounts are registered.
+        <small style={{ display: 'block', marginTop: '10px' }}>
+          💡 Check your <strong>Browser Console (F12)</strong> to view the generated JWT token header, payload, and signature!
         </small>
       </section>
     </main>

@@ -2,11 +2,101 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { logAction } from '../utils/logger.js';
+
 export default function Checkout() {
-  const { cart, subtotal, tax, total, placeOrder } = useCart(); const { user } = useAuth(); const navigate = useNavigate();
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: '', address: '', payment: 'Cash on Delivery' }); const [error, setError] = useState('');
-  function change(e) { setForm({ ...form, [e.target.name]: e.target.value }); }
-  function submit(e) { e.preventDefault(); if (!cart.length) { setError('Your cart is empty. Add food before checkout.'); return; } if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email) || !/^\d{10}$/.test(form.phone) || !form.address.trim()) { setError('Enter your name, valid email, 10-digit phone number and delivery address.'); return; } const id = placeOrder(form); navigate('/confirmation', { state: { orderId: id } }); }
-  if (!cart.length) return <main className="content narrow panel"><h2>Checkout</h2><p>Your cart is empty.</p><button onClick={() => navigate('/menu')}>Browse Menu</button></main>;
-  return <main className="content checkout-layout"><section className="panel"><h2>Delivery Details</h2>{error && <p className="error-message">{error}</p>}<form className="form-stack" onSubmit={submit}><label>Full name<input name="name" value={form.name} onChange={change} required placeholder="Your name"/></label><label>Email address<input name="email" type="email" value={form.email} onChange={change} required placeholder="you@example.com"/></label><label>Phone number<input name="phone" inputMode="numeric" maxLength="10" value={form.phone} onChange={change} required placeholder="10-digit mobile number"/></label><label>Delivery address<textarea name="address" value={form.address} onChange={change} required rows="3" placeholder="House number, street, city"/></label><label>Payment method<select name="payment" value={form.payment} onChange={change}><option>Cash on Delivery</option><option>UPI (demo)</option><option>Card (demo)</option></select></label><button className="wide" type="submit">Place Order · ₹{total.toFixed(2)}</button><small>Demo checkout only. No real payment is processed.</small></form></section><section className="panel"><h2>Order Summary</h2>{cart.map(item => <p className="summary-line" key={item.id}>{item.emoji} {item.name} × {item.quantity}<span>₹{item.price * item.quantity}</span></p>)}<div className="totals"><p>Subtotal <span>₹{subtotal.toFixed(2)}</span></p><p>Tax (5%) <span>₹{tax.toFixed(2)}</span></p><h3>Total <span>₹{total.toFixed(2)}</span></h3></div></section></main>;
+  const { cart, subtotal, tax, total, placeOrder } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    address: '',
+    payment: 'Cash on Delivery'
+  });
+  const [error, setError] = useState('');
+
+  function change(e) {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    if (!cart.length) {
+      setError('Your cart is empty. Add food before checkout.');
+      logAction('cart', 'CHECKOUT FAILED: EMPTY CART', {});
+      return;
+    }
+    if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email) || !/^\d{10}$/.test(form.phone) || !form.address.trim()) {
+      setError('Enter your name, valid email, 10-digit phone number and delivery address.');
+      logAction('cart', 'CHECKOUT FAILED: VALIDATION ERROR', { form });
+      return;
+    }
+
+    const id = await placeOrder(form);
+    navigate('/confirmation', { state: { orderId: id } });
+  }
+
+  if (!cart.length) {
+    return (
+      <main className="content narrow panel">
+        <h2>Checkout</h2>
+        <p>Your cart is empty.</p>
+        <button onClick={() => navigate('/menu')}>Browse Menu</button>
+      </main>
+    );
+  }
+
+  return (
+    <main className="content checkout-layout">
+      <section className="panel">
+        <h2>Delivery Details</h2>
+        {error && <p className="error-message">{error}</p>}
+        <form className="form-stack" onSubmit={submit}>
+          <label>
+            Full name
+            <input name="name" value={form.name} onChange={change} required placeholder="Your name" />
+          </label>
+          <label>
+            Email address
+            <input name="email" type="email" value={form.email} onChange={change} required placeholder="you@example.com" />
+          </label>
+          <label>
+            Phone number
+            <input name="phone" inputMode="numeric" maxLength="10" value={form.phone} onChange={change} required placeholder="10-digit mobile number" />
+          </label>
+          <label>
+            Delivery address
+            <textarea name="address" value={form.address} onChange={change} required rows="3" placeholder="House number, street, city" />
+          </label>
+          <label>
+            Payment method
+            <select name="payment" value={form.payment} onChange={change}>
+              <option>Cash on Delivery</option>
+              <option>UPI (demo)</option>
+              <option>Card (demo)</option>
+            </select>
+          </label>
+          <button className="wide" type="submit">Place Order · ₹{total.toFixed(2)}</button>
+          <small>Demo checkout with JWT Bearer Token attached to POST /api/orders.</small>
+        </form>
+      </section>
+      <section className="panel">
+        <h2>Order Summary</h2>
+        {cart.map(item => (
+          <p className="summary-line" key={item.id}>
+            {item.emoji} {item.name} × {item.quantity}
+            <span>₹{item.price * item.quantity}</span>
+          </p>
+        ))}
+        <div className="totals">
+          <p>Subtotal <span>₹{subtotal.toFixed(2)}</span></p>
+          <p>Tax (5%) <span>₹{tax.toFixed(2)}</span></p>
+          <h3>Total <span>₹{total.toFixed(2)}</span></h3>
+        </div>
+      </section>
+    </main>
+  );
 }
